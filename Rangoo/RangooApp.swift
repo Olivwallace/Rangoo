@@ -19,7 +19,7 @@ struct RangooApp: App {
     
     var body: some Scene {
         WindowGroup {
-            SignInView(viewModel: SignInViewModel())
+            SplashView(viewModel: SplashViewModel())
         }
     }
 }

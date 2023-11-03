@@ -19,12 +19,13 @@ struct ButtonStyle: View {
     var body: some View {
         ZStack {
             
+                
             Button {
                 action()
             }label:{
                 
                 if icon == "" {
-                    
+                
                     Text(showProgress ? "": text)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
@@ -32,17 +33,21 @@ struct ButtonStyle: View {
                         .foregroundColor(Color.white)
                         .background(color)
                         .cornerRadius(4.0)
-               
+                    
                 } else {
                     
                     Image(icon)
                         .resizable()
                         .scaledToFit()
-                        
+                        .frame(maxWidth: 25, maxHeight: 25)
+                        .padding(.horizontal, 10)
+                        .background(Color.white)
                     
                 }
             }
             .disabled(disabled || showProgress)
+           
+                
             
             ProgressView()
                 .progressViewStyle(CircularProgressViewStyle())

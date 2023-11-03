@@ -10,6 +10,7 @@ import Combine
 
 struct SignUpView: View {
     
+    @Environment(\.dismiss) var dismiss
     @ObservedObject var viewModel: SignUpViewModel
     
     var body: some View {
@@ -24,6 +25,7 @@ struct SignUpView: View {
                             .frame(maxWidth: 120, maxHeight: 120)
                             .padding(.horizontal, 10)
                             .background(Color.white)
+                            .accessibilityLabel("Imagem da logo do aplicativo")
                     
                         Spacer(minLength: 5)
                         VStack(alignment: .center, spacing: 10){
@@ -33,6 +35,7 @@ struct SignUpView: View {
                                 .font(.system(size: 40))
                                 .font(.title.bold())
                                 .padding(.vertical, 15)
+                                .accessibilityLabel("Tela de cadastro")
                             
                             fullNameView
                             phoneView
@@ -47,8 +50,7 @@ struct SignUpView: View {
                         
                         Spacer(minLength: 10)
                         signUpButton
-                        Text("ou")
-                        signUpWithGoogle
+                        
                         
                         
                     }       // End VStack Externa
@@ -71,6 +73,7 @@ extension SignUpView{
                      text: $viewModel.name,
                      error: "Nome Inválido",
                      failure: viewModel.name.isEmpty, color: Color("dark"))
+        .accessibilityLabel("Digite seu nome")
     }
 }
 
@@ -81,6 +84,7 @@ extension SignUpView{
                      text: $viewModel.phone,
                      error: "Contato Inválido",
                      failure: !viewModel.phone.isPhoneNumber(), color: Color("dark"))
+        .accessibilityLabel("Digite seu contato")
     }
 }
 
@@ -90,7 +94,8 @@ extension SignUpView{
         EditTextView(placeholder: "Endereço",
                      text: $viewModel.address,
                      error: "Endereço Inválido",
-                     failure: !viewModel.address.isEmpty, color: Color("dark"))
+                     failure: viewModel.address.isEmpty, color: Color("dark"))
+        .accessibilityLabel("Digite seu endereco")
     }
 }
 
@@ -101,6 +106,7 @@ extension SignUpView{
                     text: $viewModel.birthday,
                      error: "Data Inválida",
                      failure: !viewModel.birthday.isDate(), color: Color("dark"))
+       .accessibilityLabel("Digite a data do seu aniversario")
     }
 }
 
@@ -111,6 +117,7 @@ extension SignUpView{
                      text: $viewModel.email,
                      error: "Email Inválido",
                      failure: !viewModel.email.isEmail(), color: Color("dark"))
+        .accessibilityLabel("Digite seu email")
     }
 }
 
@@ -119,27 +126,41 @@ extension SignUpView{
     var passView: some View{
         EditTextView(placeholder: "Senha",
                      text: $viewModel.password,
-                     error: "Senha Inválida",
-                     failure: !viewModel.password.isPassword(), color: Color("dark"))
+                     error: "8 caracter, 1 letra maiúscula e 1 número.",
+                     failure: !viewModel.password.isPassword(), color: Color("dark"), isSecure: true)
+        .accessibilityLabel("Digite sua senha - 8 caracter, 1 letra maiúscula e 1 número")
     }
 }
 
 // ------ Define Button de Concluir
 extension SignUpView {
     var signUpButton: some View{
-        ButtonStyle(action: {},
-                    text: "Concluir")
+        ButtonStyle(action: {
+            viewModel.createUser()
+            alerta(message: "Cadastro realizado com sucesso")
+        }, text: "Concluir",
+                    disabled: viewModel.validateForms(),
+                    showProgress: self.viewModel.uiState == SignUpUIState.loading, color: Color("baron"))
+        .accessibilityLabel("Botao concluir cadastro")
     }
 }
 
-// ------ Define Button de Concluir
-extension SignUpView {
-    var signUpWithGoogle: some View{
-        ButtonStyle(action: {},
-                    text: "Cadastre-se com Google", icon: "google_icon")
-    }
+extension SignUpView{
+    func alerta(message: String) {
+        
+        let alert = UIAlertController(title: "Cadastro", message: message, preferredStyle: .alert)
+            
+        let okAction = UIAlertAction(title: "OK", style: .default) { _ in
+            dismiss()
+        }
+        alert.addAction(okAction)
+        
+        if let viewController = UIApplication.shared.keyWindow?.rootViewController {
+            viewController.present(alert, animated: true, completion: nil)
+        }
+        
+    } //fim alert
 }
-
 
 
 struct SignUpView_Previews: PreviewProvider {

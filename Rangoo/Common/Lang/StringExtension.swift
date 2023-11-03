@@ -13,6 +13,28 @@ extension String {
         return NSPredicate(format: "SELF MATCHES %@", regEx).evaluate(with: self)
     }
     
+    func isPhoneNumber() -> Bool {
+        return self.count > 9 && self.count < 12
+    }
+    
+    func isDate() -> Bool {
+        return self.count == 10
+    }
+    
+    func isPassword() -> Bool {
+        guard self.count == 8 else {
+            return false
+        }
+    
+        // Verifica se contém pelo menos uma letra maiúscula e um número
+        let uppercaseLetterRegex = ".*[A-Z]+.*"
+        let numberRegex = ".*[0-9]+.*"
+    
+        let uppercaseLetterPredicate = NSPredicate(format: "SELF MATCHES %@", uppercaseLetterRegex)
+        let numberPredicate = NSPredicate(format: "SELF MATCHES %@", numberRegex)
+        return uppercaseLetterPredicate.evaluate(with: self) && numberPredicate.evaluate(with: self)
+    }
+    
     func toDate (sourcePattern source: String, destPattern dest : String) -> String? {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")

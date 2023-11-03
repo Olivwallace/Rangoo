@@ -10,25 +10,28 @@ import GoogleSignIn
 import GoogleSignInSwift
 import Firebase
 import SwiftUI
+import UIKit
 
 struct SignInView: View {
     
     @ObservedObject var viewModel: SignInViewModel
 
+    @Environment(\.dismiss) var dismiss
     @State var action: Int? = 0
+    @State var redefinirSenha: Bool = false
     
     @State var navigationBarHidden = true
     
     var body: some View {
         ZStack{
             if case SignInUIState.goToHomeScreen = viewModel.uiState{
-                //TODO: Implementar redirecionamento para Home Screen
+                viewModel.homeView()
             }else{
                 NavigationView{
                     ScrollView{
                         VStack(alignment: .center){
                             
-                            Image("logo") // TODO: Criar Logo
+                            Image("logo")
                                 .resizable()
                                 .scaledToFit()
                                 .padding(.top, 80)
@@ -58,6 +61,9 @@ struct SignInView: View {
                 // End NavigationView - SignUp
             } // End Else
         } // End ZStack GoToHomeScreen
+        .sheet(isPresented: $redefinirSenha) {
+            redefinirSenhaView
+        }
     }
 }
 
@@ -68,6 +74,8 @@ extension SignInView {
                      text: $viewModel.email,
                      error: "Email Inválido",
                      failure: !viewModel.email.isEmail(), color: Color("dark"))
+        .accessibilityLabel("Digite seu email")
+        
     }
 }
 
@@ -79,6 +87,7 @@ extension SignInView{
                      error: "Senha Inválida",
                      failure: viewModel.password.count < 8,
                      keyboard: .emailAddress, color: Color("dark"), isSecure: true)
+        .accessibilityLabel("Digite sua senha")
     }
 }
 
@@ -86,22 +95,21 @@ extension SignInView{
 extension SignInView {
     var buttonLogin: some View {
         ButtonStyle(action: {
-            //TODO: Adicionar Acao
+            viewModel.loginEmailUser()
         }, text: "Entrar",
-                    disabled: !viewModel.email.isEmail() || viewModel.password.count < 8,
+                    disabled: viewModel.validateForms(),
                     showProgress: self.viewModel.uiState == SignInUIState.loading, color: Color("baron"))
+        .accessibilityLabel("Clique para logar")
     }
 }
 
 // ------ Define Button de Login com Google
 extension SignInView {
-    // TODO: Desenvolver design para button do google
     var buttonLoginGoogle: some View {
         ButtonStyle(action: {
             viewModel.loginGoogleUser()
         }, text: "Entrar com Google", showProgress: self.viewModel.uiState == SignInUIState.loading, icon: "google_icon")
-        .frame(maxWidth: 25, maxHeight: 25)
-        .padding(.top, 20)
+        .accessibilityLabel("Clique para logar com o Google")
     }
 }
 
@@ -111,12 +119,13 @@ extension SignInView {
         HStack{
             Spacer()
             Button(action: {
-                
+                redefinirSenha = true
             }, label: {
                 Text("Redefinir Senha")
                     .foregroundColor(Color.gray)
                     .font(.system(size: 14))
             })
+            .accessibilityLabel("Clique para redefinir a senha")
         }
     }
 }
@@ -124,14 +133,112 @@ extension SignInView {
 // ---- Campo Esqueci Senha
 extension SignInView {
     var signUpButton : some View {
-        Button(action: {
-            //TODO: Definir acao de recuperar senha
-        }, label: {
-            Text("Cadastre-se")
-            .foregroundColor(Color.gray)
-            .font(.system(size: 15))
-        })
+        VStack {
+            ZStack {
+                NavigationLink(
+                    destination: viewModel.signUpView(),
+                    tag: 1,
+                    selection: $action,
+                    label: {EmptyView()}
+                )
+                Button("Cadastre-se"){
+                    self.action = 1
+                }
+                .foregroundColor(Color.gray)
+                .font(.system(size: 15))
+                .accessibilityLabel("Clique para cadastrar um novo usuario")
+                
+            }
+        }
     }
+}
+
+extension SignInView {
+    var redefinirSenhaView: some View {
+        VStack(alignment: .center, spacing: 15) {
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Button {
+                    
+                }label:{
+                    Text("Sair")
+                        .font(.system(size: 20))
+                }
+            }
+            .padding()
+            .background(Color.white.opacity(0.8))
+            .offset(x: -145, y: -10)
+            
+            //Exibe Imagem Logo
+            Image("lucas")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: 120, maxHeight: 120)
+                .padding(.horizontal, 10)
+                .background(Color.white)
+                .accessibilityLabel("Imagem da logo")
+            
+            VStack(alignment: .center, spacing: 10){
+                
+                Text("Redefinir senha")
+                    .foregroundColor(.black)
+                    .font(.system(size: 30))
+                    .font(.title.bold())
+                    .padding(.vertical, 15)
+                    .accessibilityLabel("Clique para logar")
+                
+                EditTextView(placeholder: "E-mail",
+                             text: $viewModel.email,
+                             error: "Email Inválido",
+                             failure: !viewModel.email.isEmail(), color: Color("dark"))
+                .padding(20)
+                .accessibilityLabel("Digite o seu email")
+                
+                recuperarSenha
+                
+                
+                
+            }   // End VStack Interna
+        } // Fim VStack Externa
+        .padding()
+        .background(Color.white.opacity(0.8))
+        .offset(x: 0, y: -110)
+    }
+}
+
+extension SignInView {
+    var recuperarSenha: some View{
+        ButtonStyle(action: {
+            viewModel.recuperaSenha { sucess in
+                if sucess {
+                    //alert(message: "Uma mensagem de redefinicão foi enviada para o seu e-mail.")
+                } else {
+                    //alert(message: "Erro ao enviar a mensagem de redefinicao.")
+                }
+            }
+            
+        }, text: "Enviar",
+           color: Color("baron"))
+        .padding(20)
+        .accessibilityLabel("Botao enviar")
+    }
+}
+
+extension SignInView{
+    func alerta(message: String) {
+        
+        let alert = UIAlertController(title: "Redefinir senha", message: message, preferredStyle: .alert)
+        
+        let okAction = UIAlertAction(title: "OK", style: .default) { _ in
+            
+        }
+        alert.addAction(okAction)
+        
+        if let viewController = UIApplication.shared.keyWindow?.rootViewController {
+            viewController.present(alert, animated: true, completion: nil)
+        }
+        
+    } //fim alert
 }
 
 struct SignInView_Previews: PreviewProvider {
